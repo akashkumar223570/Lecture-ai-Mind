@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ lecture.title }} - LectureMind AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+    
+    <style>
+        .revision-point {
+            background: #f8fafc;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .ai-highlight {
+            background: #f0f9ff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 1px solid #bae6fd;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+            transition: transform 0.3s;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .w-full {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+    <div class="logo">
+        <div class="logo-icon">🧠</div>
+        <span>LectureMind AI</span>
+    </div>
+    <div class="nav-links">
+        <a href="{{ url_for('home') }}" class="nav-link">Home</a>
+        <a href="#" class="nav-link active">Notes</a>
+        <button id="exportBtn" class="btn btn-primary">
+            <i class="fas fa-download"></i> Export Notes
+        </button>
+    </div>
+</nav>
+
+<!-- ================= MAIN CONTAINER ================= -->
+<main class="notes-container">
+    
+    <!-- ================= HEADER ================= -->
+    <div class="notes-header">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;">
+            <div>
+                <h1 style="font-size:2rem;">{{ lecture.title }}</h1>
+                <p style="color:var(--text-light);">
+                    <i class="far fa-clock"></i> {{ lecture.timestamp[:10] }}
+                    &nbsp; | &nbsp;
+                    <i class="fas fa-link"></i> 
+                    <a href="{{ lecture.url }}" target="_blank" style="color:var(--text-light); text-decoration: none;">
+                        View Original Video
+                    </a>
+                </p>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:10px;">
+                <button onclick="window.print()" class="tool-btn">
+                    <i class="fas fa-print"></i> Print
+                </button>
+                <button onclick="shareNotes()" class="tool-btn">
+                    <i class="fas fa-share"></i> Share
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ================= TOOLBAR ================= -->
+    <div class="notes-toolbar">
+        <button class="tool-btn active" data-section="detailed">📘 Detailed Notes</button>
+        <button class="tool-btn" data-section="revision">⚡ Revision Notes</button>
+        <button class="tool-btn" data-section="doubt">🧠 Doubt Points</button>
+        <button class="tool-btn" data-section="questions">❓ Questions</button>
+        <button class="tool-btn" data-section="toolkit">📝 Practice MCQs</button>
+    </div>
+    
+    <!-- ================= LAYOUT ================= -->
+    <div class="notes-layout">
+        
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="sidebar">
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">📍 Doubt Points</div>
+                <ul class="doubt-list" id="doubtList" style="list-style: none; padding: 0;"></ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">🧩 Key Concepts</div>
+                <ul class="concept-list" id="conceptList" style="list-style: none; padding: 0;"></ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">⬇ Quick Actions</div>
+                <button onclick="app.exportNotes()" class="tool-btn w-full">
+                    <i class="fas fa-file-export"></i> Export JSON
+                </button>
+                <button onclick="window.print()" class="tool-btn w-full mt-2">
+                    <i class="fas fa-print"></i> Print Notes
+                </button>
+                <button onclick="location.href='{{ url_for('home') }}'" class="tool-btn w-full mt-2">
+                    <i class="fas fa-home"></i> New Analysis
+                </button>
+            </div>
+            
+        </aside>
+        
+        <!-- ================= CONTENT ================= -->
+        <section class="main-content">
+            
+            <!-- ✅ DETAILED NOTES -->
+            <div id="detailedSection" class="notes-section">
+                <div id="detailedNotes"></div>
+            </div>
+            
+            <!-- ✅ REVISION NOTES -->
+            <div id="revisionSection" class="notes-section hidden">
+                <div id="revisionNotes"></div>
+            </div>
+            
+            <!-- ✅ DOUBT POINTS -->
+            <div id="doubtSection" class="notes-section hidden">
+                <div class="section-heading">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h2>Doubt Points & Confusion Areas</h2>
+                </div>
+                <div id="doubtPointsContent" ></div>
+            </div>
+            
+            <!-- ✅ QUESTIONS -->
+            <div id="questionsSection" class="notes-section hidden">
+                <div class="section-heading">
+                    <i class="fas fa-question-circle"></i>
+                    <h2>Important Questions</h2>
+                </div>
+                <div id="questionsContent"></div>
+            </div>
+            
+            <!-- ✅ MCQs -->
+            <div id="toolkitSection" class="notes-section hidden">
+                <div id="mcqSection"></div>
+            </div>
+            
+        </section>
+        
+    </div>
+</main>
+
+<!-- ================= AI MODAL ================= -->
+<div id="aiModal" class="processing-modal hidden"></div>
+
+<!-- ================= SCRIPT ================= -->
+<script src="/static/script.js"></script>
+
+<script>
+// Inject lecture data for JavaScript
+const lectureData = {{ lecture | tojson | safe }};
+window.lectureData = lectureData;
+
+function shareNotes() {
+    if (navigator.share) {
+        navigator.share({
+            title: "LectureMind AI Notes - " + lectureData.title,
+            text: "Check out these smart AI-generated lecture notes!",
+            url: window.location.href
+        });
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert("Link copied to clipboard!");
+    }
+}
+
+// Initialize app when DOM is loaded
+window.lectureData = lectureData;
+
+</script>
+
+</body>
+</html>
